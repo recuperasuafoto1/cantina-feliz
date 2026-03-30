@@ -30,7 +30,7 @@ export function CardProduto({ nome, descricao, preco, imagem_url, onAdicionar, i
       {/* Imagem quadrada */}
       <div className="aspect-square overflow-hidden bg-muted">
         <img
-          src={imagem_url || '/placeholder.svg'}
+          src={getImagemProduto(nome, imagem_url)}
           alt={nome}
           className="w-full h-full object-cover"
           loading="lazy"
