@@ -40,7 +40,7 @@ export function DrawerCarrinho({ onFinalizar }: DrawerCarrinhoProps) {
             <div className="flex-1 overflow-y-auto space-y-3 py-4">
               {itens.map(item => (
                 <div key={item.produto_id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <img src={item.imagem_url || '/placeholder.svg'} alt={item.nome} className="w-14 h-14 rounded-lg object-cover" />
+                  <img src={getImagemProduto(item.nome, item.imagem_url)} alt={item.nome} className="w-14 h-14 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{item.nome}</p>
                     <p className="text-xs text-muted-foreground">
