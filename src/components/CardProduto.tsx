@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { getImagemProduto } from '@/lib/imagens-produtos';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
