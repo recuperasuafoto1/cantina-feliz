@@ -1,5 +1,6 @@
-import { ShoppingCart, X, Trash2 } from 'lucide-react';
+import { ShoppingCart, Trash2 } from 'lucide-react';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
+import { getImagemProduto } from '@/lib/imagens-produtos';
 import { InputQuantidade } from '@/components/InputQuantidade';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
