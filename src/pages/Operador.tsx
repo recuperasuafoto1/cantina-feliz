@@ -18,7 +18,6 @@ export default function Operador() {
   const [carregando, setCarregando] = useState(true);
   const [modalCancelar, setModalCancelar] = useState(false);
 
-  // Buscar próximo pedido pendente
   const buscarProximoPedido = async () => {
     setCarregando(true);
     const { data: pedidos } = await supabase
@@ -26,15 +25,14 @@ export default function Operador() {
       .select('id, numero_pedido, status')
       .in('status', ['pendente', 'em_preparacao'])
       .order('criado_em', { ascending: true })
-      .limit(1);
+      .limit(1) as { data: any[] | null };
 
     if (pedidos && pedidos.length > 0) {
       const p = pedidos[0];
-      // Buscar itens do pedido
       const { data: itens } = await supabase
         .from('itens_pedido')
         .select('quantidade, produtos(nome)')
-        .eq('pedido_id', p.id);
+        .eq('pedido_id', p.id) as { data: any[] | null };
 
       setPedido({
         id: p.id,
@@ -53,15 +51,13 @@ export default function Operador() {
 
   useEffect(() => {
     buscarProximoPedido();
-    // Polling a cada 3 segundos
     const interval = setInterval(buscarProximoPedido, 3000);
     return () => clearInterval(interval);
   }, []);
 
   const marcarEntregue = async () => {
     if (!pedido) return;
-    await supabase
-      .from('pedidos')
+    await (supabase.from('pedidos') as any)
       .update({ status: 'entregue', finalizado_em: new Date().toISOString() })
       .eq('id', pedido.id);
     buscarProximoPedido();
@@ -69,8 +65,7 @@ export default function Operador() {
 
   const cancelarPedido = async () => {
     if (!pedido) return;
-    await supabase
-      .from('pedidos')
+    await (supabase.from('pedidos') as any)
       .update({ status: 'cancelado', finalizado_em: new Date().toISOString() })
       .eq('id', pedido.id);
     buscarProximoPedido();
@@ -78,7 +73,6 @@ export default function Operador() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {/* Botão voltar */}
       <button
         onClick={() => navigate('/pain3l')}
         className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-muted flex items-center justify-center btn-press"
@@ -91,7 +85,6 @@ export default function Operador() {
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
         </div>
       ) : !pedido ? (
-        /* Sem pedidos pendentes */
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 animate-breathe">
           <Package className="w-24 h-24 text-muted-foreground/30 mb-4" />
           <h2 className="text-2xl font-extrabold text-foreground mb-2">
@@ -102,9 +95,7 @@ export default function Operador() {
           </p>
         </div>
       ) : (
-        /* Pedido atual */
         <div className="flex-1 flex flex-col items-center justify-center px-6 animate-fade-in gap-6">
-          {/* Número do pedido */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground font-bold uppercase tracking-wider">Pedido</p>
             <p className="text-[120px] font-black text-primary leading-none">
@@ -112,7 +103,6 @@ export default function Operador() {
             </p>
           </div>
 
-          {/* Lista de itens */}
           <div className="w-full max-w-md space-y-2 bg-card rounded-2xl p-4 border">
             {pedido.itens.map((item, i) => (
               <p key={i} className="text-xl font-bold text-card-foreground">
@@ -121,7 +111,6 @@ export default function Operador() {
             ))}
           </div>
 
-          {/* Botões de ação */}
           <div className="w-full max-w-md flex flex-col gap-3">
             <Button
               onClick={marcarEntregue}

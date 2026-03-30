@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { UtensilsCrossed, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// Tipo de produto vindo do banco
 interface Produto {
   id: string;
   nome: string;
@@ -18,7 +17,6 @@ interface Produto {
   ativo: boolean;
 }
 
-// Categorias com emojis
 const CATEGORIAS = [
   { id: 'todos', nome: 'Todos', emoji: '🍽️' },
   { id: 'lanche', nome: 'Lanches', emoji: '🥪' },
@@ -34,7 +32,6 @@ function CardapioConteudo() {
   const [pedidoFinalizado, setPedidoFinalizado] = useState<number | null>(null);
   const { adicionarItem, limparCarrinho } = useCarrinho();
 
-  // Buscar produtos do banco
   useEffect(() => {
     async function buscarProdutos() {
       const { data, error } = await supabase
@@ -42,7 +39,7 @@ function CardapioConteudo() {
         .select('*')
         .eq('ativo', true)
         .gt('estoque_atual', 0)
-        .order('categoria');
+        .order('categoria') as { data: any[] | null; error: any };
 
       if (!error && data) {
         setProdutos(data as Produto[]);
@@ -57,13 +54,11 @@ function CardapioConteudo() {
     : produtos.filter(p => p.categoria === categoriaAtiva);
 
   const finalizarPedido = async () => {
-    // Gerar número de pedido simples (client-side por enquanto)
     const numero = Math.floor(Math.random() * 990) + 11;
     setPedidoFinalizado(numero);
     limparCarrinho();
   };
 
-  // Tela de sucesso após pedido
   if (pedidoFinalizado) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 animate-fade-in">
@@ -89,7 +84,6 @@ function CardapioConteudo() {
 
   return (
     <div className="min-h-screen pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b px-4 py-3">
         <div className="flex items-center gap-2 max-w-lg mx-auto">
           <UtensilsCrossed className="w-7 h-7 text-primary" />
@@ -97,7 +91,6 @@ function CardapioConteudo() {
         </div>
       </header>
 
-      {/* Filtros de categoria */}
       <div className="sticky top-[57px] z-30 bg-background/95 backdrop-blur-sm px-4 py-2">
         <div className="flex gap-2 overflow-x-auto max-w-lg mx-auto scrollbar-hide">
           {CATEGORIAS.map(cat => (
@@ -116,7 +109,6 @@ function CardapioConteudo() {
         </div>
       </div>
 
-      {/* Grid de produtos */}
       <main className="px-4 py-4 max-w-lg mx-auto">
         {carregando ? (
           <div className="flex items-center justify-center py-20">
@@ -150,13 +142,11 @@ function CardapioConteudo() {
         )}
       </main>
 
-      {/* Carrinho flutuante */}
       <DrawerCarrinho onFinalizar={finalizarPedido} />
     </div>
   );
 }
 
-// Wrapper com CarrinhoProvider
 export default function Cardapio() {
   return (
     <CarrinhoProvider>
