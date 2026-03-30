@@ -1,96 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Sistema de Design - Cantina Marum
+   Todos os temas definidos via CSS variables HSL */
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+  /* Tema Verão (padrão) */
+  :root, .tema-verao {
+    --background: 39 100% 95%;
+    --foreground: 16 30% 29%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 16 30% 29%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --popover-foreground: 16 30% 29%;
+    --primary: 14 100% 71%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 163 46% 72%;
+    --secondary-foreground: 16 30% 29%;
+    --muted: 39 60% 92%;
+    --muted-foreground: 0 0% 62%;
+    --accent: 163 46% 72%;
+    --accent-foreground: 16 30% 29%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 39 30% 88%;
+    --input: 39 30% 88%;
+    --ring: 14 100% 71%;
+    --radius: 0.75rem;
+    --sidebar-background: 39 60% 97%;
+    --sidebar-foreground: 16 30% 29%;
+    --sidebar-primary: 14 100% 71%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 163 46% 85%;
+    --sidebar-accent-foreground: 16 30% 29%;
+    --sidebar-border: 39 30% 88%;
+    --sidebar-ring: 14 100% 71%;
+    --cantina-success: 142 71% 45%;
+    --cantina-warning: 45 93% 47%;
+    --cantina-info: 207 90% 61%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+  .tema-ceu {
+    --background: 210 100% 95%;
+    --foreground: 211 79% 23%;
+    --card: 0 0% 100%;
+    --card-foreground: 211 79% 23%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 211 79% 23%;
+    --primary: 210 86% 68%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 100% 67%;
+    --secondary-foreground: 211 79% 23%;
+    --muted: 210 60% 92%;
+    --muted-foreground: 210 20% 55%;
+    --accent: 45 100% 67%;
+    --accent-foreground: 211 79% 23%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 40% 88%;
+    --input: 210 40% 88%;
+    --ring: 210 86% 68%;
+    --sidebar-background: 210 60% 97%;
+    --sidebar-foreground: 211 79% 23%;
+    --sidebar-primary: 210 86% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 45 100% 85%;
+    --sidebar-accent-foreground: 211 79% 23%;
+    --sidebar-border: 210 40% 88%;
+    --sidebar-ring: 210 86% 68%;
+    --cantina-success: 142 71% 45%;
+    --cantina-warning: 45 93% 47%;
+    --cantina-info: 210 86% 68%;
+  }
+
+  .tema-pastel {
+    --background: 291 47% 95%;
+    --foreground: 291 100% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 291 100% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 291 100% 15%;
+    --primary: 291 47% 71%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 174 34% 65%;
+    --secondary-foreground: 291 100% 15%;
+    --muted: 291 30% 92%;
+    --muted-foreground: 291 20% 55%;
+    --accent: 174 34% 65%;
+    --accent-foreground: 291 100% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 291 20% 88%;
+    --input: 291 20% 88%;
+    --ring: 291 47% 71%;
+    --sidebar-background: 291 30% 97%;
+    --sidebar-foreground: 291 100% 15%;
+    --sidebar-primary: 291 47% 71%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 174 34% 85%;
+    --sidebar-accent-foreground: 291 100% 15%;
+    --sidebar-border: 291 20% 88%;
+    --sidebar-ring: 291 47% 71%;
+    --cantina-success: 142 71% 45%;
+    --cantina-warning: 45 93% 47%;
+    --cantina-info: 291 47% 71%;
+  }
+
+  .tema-frutas {
+    --background: 69 67% 95%;
+    --foreground: 95 75% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 95 75% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 95 75% 16%;
+    --primary: 88 49% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 33 100% 75%;
+    --secondary-foreground: 95 75% 16%;
+    --muted: 69 40% 92%;
+    --muted-foreground: 69 20% 50%;
+    --accent: 33 100% 75%;
+    --accent-foreground: 95 75% 16%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 69 30% 85%;
+    --input: 69 30% 85%;
+    --ring: 88 49% 67%;
+    --sidebar-background: 69 40% 97%;
+    --sidebar-foreground: 95 75% 16%;
+    --sidebar-primary: 88 49% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 33 100% 85%;
+    --sidebar-accent-foreground: 95 75% 16%;
+    --sidebar-border: 69 30% 85%;
+    --sidebar-ring: 88 49% 67%;
+    --cantina-success: 142 71% 45%;
+    --cantina-warning: 45 93% 47%;
+    --cantina-info: 88 49% 67%;
   }
 }
 
@@ -98,8 +147,46 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Animação de bounce para botão adicionar */
+  .animate-bounce-once {
+    animation: bounceOnce 0.4s ease-out;
+  }
+  @keyframes bounceOnce {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.3); }
+    50% { transform: scale(0.9); }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Feedback tátil em botões */
+  .btn-press:active {
+    transform: scale(0.98);
+  }
+
+  /* Animação de respiração/pulse suave */
+  .animate-breathe {
+    animation: breathe 3s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+
+  /* Stagger fade-in para cards */
+  .stagger-fade-in {
+    animation: staggerFadeIn 0.4s ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes staggerFadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
