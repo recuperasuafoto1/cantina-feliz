@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
+type Produto = {
+  id: string; nome: string; descricao: string | null; preco: number;
+  categoria: string; estoque_atual: number; ativo: boolean;
+};
+
 export function PainelProdutos() {
-  const [produtos, setProdutos] = useState<any[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
 
   useEffect(() => {
     async function buscar() {
-      const { data } = await supabase.from('produtos').select('*').order('nome') as any;
-      if (data) setProdutos(data);
+      const { data } = await supabase.from('produtos').select('*').order('nome');
+      if (data) setProdutos(data as unknown as Produto[]);
     }
     buscar();
   }, []);

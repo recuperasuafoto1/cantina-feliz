@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, UserCog } from 'lucide-react';
 
+type Funcionario = { id: string; nome: string; ativo: boolean; data_cadastro: string };
+
 export function PainelFuncionarios() {
-  const [funcionarios, setFuncionarios] = useState<any[]>([]);
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [novoNome, setNovoNome] = useState('');
 
   useEffect(() => {
@@ -13,13 +15,13 @@ export function PainelFuncionarios() {
   }, []);
 
   async function buscar() {
-    const { data } = await supabase.from('funcionarios').select('*').order('nome') as any;
-    if (data) setFuncionarios(data);
+    const { data } = await supabase.from('funcionarios').select('*').order('nome');
+    if (data) setFuncionarios(data as unknown as Funcionario[]);
   }
 
   async function adicionar() {
     if (!novoNome.trim()) return;
-    await supabase.from('funcionarios').insert({ nome: novoNome.trim(), ativo: true } as any);
+    await (supabase.from('funcionarios') as any).insert({ nome: novoNome.trim(), ativo: true });
     setNovoNome('');
     buscar();
   }
