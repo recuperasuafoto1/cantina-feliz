@@ -289,6 +289,7 @@ export type Database = {
       pedidos: {
         Row: {
           criado_em: string
+          crianca_id: string | null
           crianca_nome: string | null
           finalizado_em: string | null
           forma_pagamento: string | null
@@ -300,6 +301,7 @@ export type Database = {
         }
         Insert: {
           criado_em?: string
+          crianca_id?: string | null
           crianca_nome?: string | null
           finalizado_em?: string | null
           forma_pagamento?: string | null
@@ -311,6 +313,7 @@ export type Database = {
         }
         Update: {
           criado_em?: string
+          crianca_id?: string | null
           crianca_nome?: string | null
           finalizado_em?: string | null
           forma_pagamento?: string | null
@@ -321,6 +324,13 @@ export type Database = {
           valor_total?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "pedidos_crianca_id_fkey"
+            columns: ["crianca_id"]
+            isOneToOne: false
+            referencedRelation: "criancas_clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pedidos_funcionario_id_fkey"
             columns: ["funcionario_id"]
