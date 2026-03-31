@@ -57,7 +57,7 @@ export function PainelClientes() {
         const { error } = await supabase.from('criancas_clientes').update(dadosBase).eq('id', id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('criancas_clientes').insert([dadosBase]);
+        const { error } = await supabase.from('criancas_clientes').insert([dadosBase as any]);
         if (error) throw error;
       }
     },

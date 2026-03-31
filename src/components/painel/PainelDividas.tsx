@@ -67,7 +67,7 @@ export function PainelDividas() {
         const { error } = await supabase.from('dividas').update(dataParaEnviar).eq('id', id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('dividas').insert([dataParaEnviar]);
+        const { error } = await supabase.from('dividas').insert([dataParaEnviar as any]);
         if (error) throw error;
       }
     },

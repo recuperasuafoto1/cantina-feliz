@@ -70,7 +70,7 @@ export function PainelProdutos() {
         const { error } = await supabase.from('produtos').update(dadosInsercao).eq('id', id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('produtos').insert([dadosInsercao]);
+        const { error } = await supabase.from('produtos').insert([dadosInsercao as any]);
         if (error) throw error;
       }
     },

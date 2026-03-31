@@ -48,7 +48,7 @@ export function PainelFuncionarios() {
         const { error } = await supabase.from('funcionarios').update(dadosBase).eq('id', id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('funcionarios').insert([dadosBase]);
+        const { error } = await supabase.from('funcionarios').insert([dadosBase as any]);
         if (error) throw error;
       }
     },
