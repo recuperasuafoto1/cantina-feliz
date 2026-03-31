@@ -189,6 +189,20 @@
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  
+  .animate-fade-up {
+    animation: staggerFadeIn 0.5s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .slide-in-bottom {
+     animation: slideInBottom 0.5s ease-out forwards;
+     opacity: 0;
+  }
+  @keyframes slideInBottom {
+     from { opacity: 0; transform: translateY(30px); }
+     to { opacity: 1; transform: translateY(0); }
+  }
 
   /* Scale-in para tela de sucesso */
   .animate-scale-in {

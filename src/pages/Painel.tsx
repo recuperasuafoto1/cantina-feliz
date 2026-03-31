@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, UtensilsCrossed, User } from 'lucide-react';
@@ -9,9 +8,18 @@ import { PainelSidebar } from '@/components/painel/PainelSidebar';
 import { PainelProdutos } from '@/components/painel/PainelProdutos';
 import { PainelFuncionarios } from '@/components/painel/PainelFuncionarios';
 import { PainelConfiguracoes } from '@/components/painel/PainelConfiguracoes';
+import { PainelEstoque } from '@/components/painel/PainelEstoque';
+import { PainelClientes } from '@/components/painel/PainelClientes';
+import { PainelCaixa } from '@/components/painel/PainelCaixa';
+import { PainelDividas } from '@/components/painel/PainelDividas';
+import { PainelAnotacoes } from '@/components/painel/PainelAnotacoes';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useQuery } from '@tanstack/react-query';
+import { Progress } from '@/components/ui/progress';
 
 export default function Painel() {
-  const { autenticado, login } = useAuth();
+  const { autenticado, funcionarioAtual, login, selecionarFuncionario } = useAuth();
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState(false);
   const [secaoAtiva, setSecaoAtiva] = useState('dashboard');
@@ -25,7 +33,32 @@ export default function Painel() {
     }
   };
 
-  // Tela de login
+  const { data: funcionarios, isLoading } = useQuery({
+    queryKey: ['funcionarios-ativos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('funcionarios')
+        .select('*')
+        .eq('ativo', true);
+        
+      if (error) {
+        console.error('Erro ao buscar funcionários:', error);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: autenticado && !funcionarioAtual,
+  });
+
+  // Se a consulta terminar e não houver funcionários, logar como 'Admin Admin'
+  useEffect(() => {
+    if (autenticado && !funcionarioAtual && funcionarios && funcionarios.length === 0) {
+      selecionarFuncionario('Admin Default');
+    }
+  }, [autenticado, funcionarioAtual, funcionarios, selecionarFuncionario]);
+
+
+  // Tela de login inicial
   if (!autenticado) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -58,13 +91,55 @@ export default function Painel() {
     );
   }
 
-  // Renderiza a seção ativa
+  // Tela de seleção de funcionário
+  if (autenticado && !funcionarioAtual) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-2xl space-y-6 animate-fade-in text-center">
+          <div className="flex flex-col items-center gap-2 mb-8">
+            <h1 className="text-2xl font-bold text-foreground">Quem está usando o sistema?</h1>
+            <p className="text-sm text-muted-foreground">Selecione seu usuário para continuar</p>
+          </div>
+          
+          {isLoading ? (
+             <div className="flex justify-center p-8">
+               <Progress value={33} className="w-[60%]" />
+             </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {funcionarios?.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => selecionarFuncionario(f.nome)}
+                  className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-accent hover:scale-105 transition-all text-card-foreground"
+                >
+                  <Avatar className="w-16 h-16 border-2 border-primary">
+                    <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary">
+                      {f.nome.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-sm text-center line-clamp-2">{f.nome}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Renderiza a seção ativa do painel admin
   const renderSecao = () => {
     switch (secaoAtiva) {
       case 'dashboard': return <PainelDashboard />;
+      case 'caixa': return <PainelCaixa />;
       case 'produtos': return <PainelProdutos />;
       case 'funcionarios': return <PainelFuncionarios />;
       case 'configuracoes': return <PainelConfiguracoes />;
+      case 'estoque': return <PainelEstoque />;
+      case 'clientes': return <PainelClientes />;
+      case 'dividas': return <PainelDividas />;
+      case 'anotacoes': return <PainelAnotacoes />;
       default: return <PainelDashboard />;
     }
   };

@@ -84,6 +84,24 @@ export type Database = {
           },
         ]
       }
+      configuracoes_sistema: {
+        Row: {
+          id: number
+          css_personalizado: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          css_personalizado?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          css_personalizado?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       controle_numeros: {
         Row: {
           data_atual: string
@@ -170,6 +188,42 @@ export type Database = {
           },
         ]
       }
+      movimentacoes_credito: {
+        Row: {
+          id: string
+          crianca_id: string
+          valor: number
+          tipo: 'entrada' | 'saida'
+          descricao: string | null
+          data: string
+        }
+        Insert: {
+          id?: string
+          crianca_id: string
+          valor: number
+          tipo: 'entrada' | 'saida'
+          descricao?: string | null
+          data?: string
+        }
+        Update: {
+          id?: string
+          crianca_id?: string
+          valor?: number
+          tipo?: 'entrada' | 'saida'
+          descricao?: string | null
+          data?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_credito_crianca_id_fkey"
+            columns: ["crianca_id"]
+            isOneToOne: false
+            referencedRelation: "criancas_clientes"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+
       funcionarios: {
         Row: {
           ativo: boolean

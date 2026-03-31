@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Users, Baby, Settings, PlayCircle,
-  LogOut, ChevronLeft, ChevronRight, UserCog, Archive
+  LogOut, ChevronLeft, ChevronRight, UserCog, Archive, Wallet, StickyNote, Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -14,8 +14,13 @@ interface PainelSidebarProps {
 
 const MENU_ITEMS = [
   { id: 'dashboard', nome: 'Dashboard', icone: LayoutDashboard },
+  { id: 'caixa', nome: 'Caixa', icone: Wallet },
   { id: 'produtos', nome: 'Produtos', icone: Package },
+  { id: 'estoque', nome: 'Estoque', icone: Archive },
   { id: 'funcionarios', nome: 'Funcionários', icone: UserCog },
+  { id: 'clientes', nome: 'Clientes/Crianças', icone: Baby },
+  { id: 'dividas', nome: 'Dívidas a Receber', icone: Receipt },
+  { id: 'anotacoes', nome: 'Diário/Anotações', icone: StickyNote },
   { id: 'configuracoes', nome: 'Configurações', icone: Settings },
 ];
 

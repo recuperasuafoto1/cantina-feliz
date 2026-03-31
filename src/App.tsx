@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TemaProvider } from "@/contexts/TemaContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GlobalCss } from "./components/painel/GlobalCss.tsx";
 import Index from "./pages/Index.tsx";
 import Painel from "./pages/Painel.tsx";
 import Operador from "./pages/Operador.tsx";
@@ -14,6 +15,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <GlobalCss />
     <TemaProvider>
       <AuthProvider>
         <TooltipProvider>
