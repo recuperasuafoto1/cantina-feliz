@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { CardProduto } from '@/components/CardProduto';
 import { DrawerCarrinho } from '@/components/DrawerCarrinho';
-import { useCarrinho, CarrinhoProvider } from '@/contexts/CarrinhoContext';
+import { useCarrinho, CarrinhoProvider, UpsellInfo } from '@/contexts/CarrinhoContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UtensilsCrossed, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface Produto {
   id: string;
@@ -15,6 +16,8 @@ interface Produto {
   categoria: string;
   estoque_atual: number;
   ativo: boolean;
+  eh_order_bump_para: string | null;
+  tem_upsell_para: string | null;
 }
 
 const CATEGORIAS = [
@@ -30,7 +33,7 @@ function CardapioConteudo() {
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [carregando, setCarregando] = useState(true);
   const [pedidoFinalizado, setPedidoFinalizado] = useState<number | null>(null);
-  const { adicionarItem, limparCarrinho } = useCarrinho();
+  const { adicionarItem, limparCarrinho, itens, removerItem } = useCarrinho();
 
   useEffect(() => {
     async function buscarProdutos() {
@@ -53,27 +56,133 @@ function CardapioConteudo() {
     ? produtos
     : produtos.filter(p => p.categoria === categoriaAtiva);
 
+  // Buscar info de bump para um produto (quem tem bump_para apontando para ele)
+  const getBumpInfo = (produtoId: string) => {
+    // Encontrar produto que é bump PARA este produto
+    const bump = produtos.find(p => p.eh_order_bump_para === produtoId);
+    if (!bump) return undefined;
+    return {
+      produto_id: bump.id,
+      nome: bump.nome,
+      preco: bump.preco,
+      imagem_url: bump.imagem_url || '',
+    };
+  };
+
+  // Calcular upsells disponíveis baseado nos itens no carrinho
+  const getUpsellsDisponiveis = (): UpsellInfo[] => {
+    const upsells: UpsellInfo[] = [];
+    for (const item of itens) {
+      if (item.eh_bump) continue;
+      const produto = produtos.find(p => p.id === item.produto_id);
+      if (produto?.tem_upsell_para) {
+        const upsellProduto = produtos.find(p => p.id === produto.tem_upsell_para);
+        if (upsellProduto) {
+          upsells.push({
+            item_original_id: item.produto_id,
+            item_original_nome: item.nome,
+            upsell: {
+              produto_id: upsellProduto.id,
+              nome: upsellProduto.nome,
+              preco: upsellProduto.preco,
+              imagem_url: upsellProduto.imagem_url || '',
+            },
+            diferenca: upsellProduto.preco - item.preco,
+          });
+        }
+      }
+    }
+    return upsells;
+  };
+
+  const handleAceitarUpsell = (upsell: UpsellInfo) => {
+    // Remove item original, adiciona upsell
+    removerItem(upsell.item_original_id);
+    adicionarItem({
+      produto_id: upsell.upsell.produto_id,
+      nome: upsell.upsell.nome,
+      preco: upsell.upsell.preco,
+      imagem_url: upsell.upsell.imagem_url,
+    });
+  };
+
   const finalizarPedido = async () => {
-    const numero = Math.floor(Math.random() * 990) + 11;
-    setPedidoFinalizado(numero);
-    limparCarrinho();
+    try {
+      // 1. Gerar número do pedido via RPC
+      const { data: numero, error: errNum } = await supabase.rpc('gerar_numero_pedido');
+      if (errNum || !numero) {
+        toast.error('Erro ao gerar número do pedido');
+        console.error(errNum);
+        return;
+      }
+
+      // 2. Calcular total
+      const valorTotal = itens.reduce((acc, i) => acc + i.preco * i.quantidade, 0);
+
+      // 3. Criar pedido
+      const { data: pedido, error: errPedido } = await (supabase.from('pedidos') as any)
+        .insert({
+          numero_pedido: numero,
+          status: 'pendente',
+          valor_total: valorTotal,
+        })
+        .select('id')
+        .single();
+
+      if (errPedido || !pedido) {
+        toast.error('Erro ao criar pedido');
+        console.error(errPedido);
+        return;
+      }
+
+      // 4. Criar itens do pedido
+      const itensInsert = itens.map(item => ({
+        pedido_id: pedido.id,
+        produto_id: item.produto_id,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco,
+        subtotal: item.preco * item.quantidade,
+      }));
+
+      const { error: errItens } = await (supabase.from('itens_pedido') as any).insert(itensInsert);
+      if (errItens) {
+        console.error('Erro itens:', errItens);
+      }
+
+      // 5. Decrementar estoque
+      for (const item of itens) {
+        const prod = produtos.find(p => p.id === item.produto_id);
+        if (prod) {
+          await (supabase.from('produtos') as any)
+            .update({ estoque_atual: Math.max(0, prod.estoque_atual - item.quantidade) })
+            .eq('id', item.produto_id);
+        }
+      }
+
+      // 6. Sucesso
+      setPedidoFinalizado(numero);
+      limparCarrinho();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro inesperado ao finalizar pedido');
+    }
   };
 
   if (pedidoFinalizado) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 animate-fade-in">
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-6 animate-scale-in">
           <p className="text-6xl">🎉</p>
           <h1 className="text-2xl font-extrabold text-foreground">Pedido realizado!</h1>
-          <p className="text-[72px] font-black text-primary leading-none">
+          <p className="text-6xl md:text-8xl font-black text-primary leading-none">
             #{pedidoFinalizado}
           </p>
           <p className="text-muted-foreground text-sm">
-            Aguarde seu número ser chamado
+            Anote seu número e apresente no caixa!
           </p>
           <Button
             onClick={() => setPedidoFinalizado(null)}
-            className="w-[80%] h-14 text-lg font-extrabold rounded-2xl bg-secondary text-secondary-foreground btn-press"
+            className="w-full max-w-md h-20 text-2xl font-extrabold rounded-2xl bg-secondary text-secondary-foreground btn-press"
           >
             🔄 Novo Pedido
           </Button>
@@ -130,19 +239,26 @@ function CardapioConteudo() {
                 preco={produto.preco}
                 imagem_url={produto.imagem_url}
                 indice={i}
-                onAdicionar={() => adicionarItem({
-                  produto_id: produto.id,
-                  nome: produto.nome,
-                  preco: produto.preco,
-                  imagem_url: produto.imagem_url,
-                })}
+                onAdicionar={() => adicionarItem(
+                  {
+                    produto_id: produto.id,
+                    nome: produto.nome,
+                    preco: produto.preco,
+                    imagem_url: produto.imagem_url,
+                  },
+                  getBumpInfo(produto.id),
+                )}
               />
             ))}
           </div>
         )}
       </main>
 
-      <DrawerCarrinho onFinalizar={finalizarPedido} />
+      <DrawerCarrinho
+        onFinalizar={finalizarPedido}
+        upsells={getUpsellsDisponiveis()}
+        onAceitarUpsell={handleAceitarUpsell}
+      />
     </div>
   );
 }
