@@ -151,10 +151,12 @@ function CardapioConteudo() {
 
       // 5. Decrementar estoque
       for (const item of itens) {
-        await (supabase.rpc as any)('', {}); // fallback: update direto
-        await (supabase.from('produtos') as any)
-          .update({ estoque_atual: produtos.find(p => p.id === item.produto_id)!.estoque_atual - item.quantidade })
-          .eq('id', item.produto_id);
+        const prod = produtos.find(p => p.id === item.produto_id);
+        if (prod) {
+          await (supabase.from('produtos') as any)
+            .update({ estoque_atual: Math.max(0, prod.estoque_atual - item.quantidade) })
+            .eq('id', item.produto_id);
+        }
       }
 
       // 6. Sucesso
