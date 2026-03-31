@@ -84,6 +84,24 @@ export type Database = {
           },
         ]
       }
+      configuracoes_sistema: {
+        Row: {
+          css_personalizado: string | null
+          id: number
+          updated_at: string | null
+        }
+        Insert: {
+          css_personalizado?: string | null
+          id?: number
+          updated_at?: string | null
+        }
+        Update: {
+          css_personalizado?: string | null
+          id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       controle_numeros: {
         Row: {
           data_atual: string
@@ -229,6 +247,41 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes_credito: {
+        Row: {
+          crianca_id: string
+          data: string | null
+          descricao: string | null
+          id: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          crianca_id: string
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          tipo: string
+          valor: number
+        }
+        Update: {
+          crianca_id?: string
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_credito_crianca_id_fkey"
+            columns: ["crianca_id"]
+            isOneToOne: false
+            referencedRelation: "criancas_clientes"
             referencedColumns: ["id"]
           },
         ]
