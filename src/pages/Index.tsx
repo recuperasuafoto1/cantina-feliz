@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CardProduto } from '@/components/CardProduto';
 import { DrawerCarrinho } from '@/components/DrawerCarrinho';
+import { ModalPagamento, PagamentoSelecionado } from '@/components/ModalPagamento';
 import { useCarrinho, CarrinhoProvider, UpsellInfo } from '@/contexts/CarrinhoContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UtensilsCrossed, Loader2 } from 'lucide-react';
@@ -33,7 +34,9 @@ function CardapioConteudo() {
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [carregando, setCarregando] = useState(true);
   const [pedidoFinalizado, setPedidoFinalizado] = useState<number | null>(null);
-  const { adicionarItem, limparCarrinho, itens, removerItem } = useCarrinho();
+  const [modalPagamento, setModalPagamento] = useState(false);
+  const [processandoPedido, setProcessandoPedido] = useState(false);
+  const { adicionarItem, limparCarrinho, itens, removerItem, total } = useCarrinho();
 
   useEffect(() => {
     async function buscarProdutos() {
@@ -56,9 +59,8 @@ function CardapioConteudo() {
     ? produtos
     : produtos.filter(p => p.categoria === categoriaAtiva);
 
-  // Buscar info de bump para um produto (quem tem bump_para apontando para ele)
+  // Buscar info de bump para um produto
   const getBumpInfo = (produtoId: string) => {
-    // Encontrar produto que é bump PARA este produto
     const bump = produtos.find(p => p.eh_order_bump_para === produtoId);
     if (!bump) return undefined;
     return {
@@ -69,7 +71,7 @@ function CardapioConteudo() {
     };
   };
 
-  // Calcular upsells disponíveis baseado nos itens no carrinho
+  // Calcular upsells disponíveis
   const getUpsellsDisponiveis = (): UpsellInfo[] => {
     const upsells: UpsellInfo[] = [];
     for (const item of itens) {
@@ -96,7 +98,6 @@ function CardapioConteudo() {
   };
 
   const handleAceitarUpsell = (upsell: UpsellInfo) => {
-    // Remove item original, adiciona upsell
     removerItem(upsell.item_original_id);
     adicionarItem({
       produto_id: upsell.upsell.produto_id,
@@ -106,32 +107,49 @@ function CardapioConteudo() {
     });
   };
 
-  const finalizarPedido = async () => {
+  // Chamado pelo DrawerCarrinho ao finalizar (após upsells)
+  const handlePreFinalizar = async () => {
+    // Abre modal de pagamento em vez de finalizar direto
+    setModalPagamento(true);
+  };
+
+  // Chamado ao confirmar forma de pagamento
+  const confirmarPedido = async (pagamento: PagamentoSelecionado) => {
+    setProcessandoPedido(true);
     try {
       // 1. Gerar número do pedido via RPC
       const { data: numero, error: errNum } = await supabase.rpc('gerar_numero_pedido');
       if (errNum || !numero) {
         toast.error('Erro ao gerar número do pedido');
         console.error(errNum);
+        setProcessandoPedido(false);
         return;
       }
 
       // 2. Calcular total
       const valorTotal = itens.reduce((acc, i) => acc + i.preco * i.quantidade, 0);
 
-      // 3. Criar pedido
+      // 3. Criar pedido com forma de pagamento e crianca_id
+      const pedidoData: any = {
+        numero_pedido: numero,
+        status: 'pendente',
+        valor_total: valorTotal,
+        forma_pagamento: pagamento.forma,
+      };
+      if (pagamento.forma === 'credito' && pagamento.crianca_id) {
+        pedidoData.crianca_id = pagamento.crianca_id;
+        pedidoData.crianca_nome = pagamento.crianca_nome;
+      }
+
       const { data: pedido, error: errPedido } = await (supabase.from('pedidos') as any)
-        .insert({
-          numero_pedido: numero,
-          status: 'pendente',
-          valor_total: valorTotal,
-        })
+        .insert(pedidoData)
         .select('id')
         .single();
 
       if (errPedido || !pedido) {
         toast.error('Erro ao criar pedido');
         console.error(errPedido);
+        setProcessandoPedido(false);
         return;
       }
 
@@ -145,9 +163,7 @@ function CardapioConteudo() {
       }));
 
       const { error: errItens } = await (supabase.from('itens_pedido') as any).insert(itensInsert);
-      if (errItens) {
-        console.error('Erro itens:', errItens);
-      }
+      if (errItens) console.error('Erro itens:', errItens);
 
       // 5. Decrementar estoque
       for (const item of itens) {
@@ -160,11 +176,14 @@ function CardapioConteudo() {
       }
 
       // 6. Sucesso
+      setModalPagamento(false);
       setPedidoFinalizado(numero);
       limparCarrinho();
     } catch (err) {
       console.error(err);
       toast.error('Erro inesperado ao finalizar pedido');
+    } finally {
+      setProcessandoPedido(false);
     }
   };
 
@@ -255,9 +274,18 @@ function CardapioConteudo() {
       </main>
 
       <DrawerCarrinho
-        onFinalizar={finalizarPedido}
+        onFinalizar={handlePreFinalizar}
         upsells={getUpsellsDisponiveis()}
         onAceitarUpsell={handleAceitarUpsell}
+      />
+
+      {/* Modal de pagamento - abre ANTES de gerar número */}
+      <ModalPagamento
+        aberto={modalPagamento}
+        onFechar={() => setModalPagamento(false)}
+        onConfirmar={confirmarPedido}
+        valorTotal={total}
+        processando={processandoPedido}
       />
     </div>
   );
