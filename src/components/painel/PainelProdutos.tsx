@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Tag, Package, ImageIcon, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Tag, Package, ImageIcon, Trash2, Upload, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -31,13 +31,22 @@ const formSchema = z.object({
 
 type ProdutoFormValues = z.infer<typeof formSchema>;
 
-const CATEGORIAS = ['Salgados', 'Bebidas', 'Doces', 'Combos', 'Outros'];
+// Valores exatos conforme constraint do banco
+const CATEGORIAS = [
+  { value: 'lanche', label: 'Lanche' },
+  { value: 'bebida', label: 'Bebida' },
+  { value: 'doce', label: 'Doce' },
+  { value: 'snack', label: 'Snack' },
+];
 
 export function PainelProdutos() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [modalAberto, setModalAberto] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<ProdutoFormValues | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProdutoFormValues>({
     resolver: zodResolver(formSchema),
@@ -55,6 +64,51 @@ export function PainelProdutos() {
       return data;
     }
   });
+
+  // Upload de imagem para Supabase Storage
+  const handleUploadImagem = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo
+    const tiposPermitidos = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!tiposPermitidos.includes(file.type)) {
+      toast({ title: 'Formato inválido', description: 'Apenas PNG ou JPG são aceitos.', variant: 'destructive' });
+      return;
+    }
+
+    // Validar tamanho (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: 'Imagem muito grande', description: 'Tamanho máximo: 2MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const nomeArquivo = `produto_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error } = await supabase.storage.from('produtos').upload(nomeArquivo, file);
+
+    if (error) {
+      toast({ title: 'Erro no upload', description: error.message, variant: 'destructive' });
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from('produtos').getPublicUrl(nomeArquivo);
+    const url = urlData.publicUrl;
+
+    form.setValue('imagem_url', url);
+    setPreviewUrl(url);
+    setUploading(false);
+    toast({ title: 'Imagem enviada!' });
+  };
+
+  const removerImagem = () => {
+    form.setValue('imagem_url', null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const salvarProdutation = useMutation({
     mutationFn: async (valores: ProdutoFormValues) => {
@@ -79,6 +133,7 @@ export function PainelProdutos() {
       toast({ title: 'Sucesso!', description: 'Produto salvo com sucesso.' });
       setModalAberto(false);
       form.reset();
+      setPreviewUrl(null);
     },
     onError: (erro) => {
       toast({ title: 'Erro ao salvar', description: erro.message, variant: 'destructive' });
@@ -98,6 +153,7 @@ export function PainelProdutos() {
 
   const abrirModalNovo = () => {
     setProdutoEditando(null);
+    setPreviewUrl(null);
     form.reset({
       nome: '', descricao: '', preco: 0, categoria: '', estoque_atual: 0, 
       ativo: true, eh_order_bump_para: 'none', tem_upsell_para: 'none', imagem_url: ''
@@ -107,6 +163,7 @@ export function PainelProdutos() {
 
   const abrirModalEditar = (produto: any) => {
     setProdutoEditando(produto);
+    setPreviewUrl(produto.imagem_url || null);
     form.reset({
       id: produto.id,
       nome: produto.nome,
@@ -210,10 +267,10 @@ export function PainelProdutos() {
 
                 <FormField control={form.control} name="categoria" render={({ field }) => (
                   <FormItem><FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {CATEGORIAS.map(cat => <SelectItem key={cat} value={cat.toLowerCase()}>{cat}</SelectItem>)}
+                        {CATEGORIAS.map(cat => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   <FormMessage /></FormItem>
@@ -238,12 +295,46 @@ export function PainelProdutos() {
                 <FormMessage /></FormItem>
               )} />
 
-              {/* Upload de imagem placeholder */}
+              {/* Upload de imagem real */}
               <div className="border border-dashed border-border rounded-xl p-4 bg-muted/20">
-                <FormLabel className="mb-2 block">Imagem do Produto (Supabase Storage)</FormLabel>
+                <FormLabel className="mb-2 block">Imagem do Produto (opcional)</FormLabel>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg"
+                  className="hidden"
+                  onChange={handleUploadImagem}
+                />
                 <div className="flex items-center gap-3">
-                   <Button type="button" variant="secondary" size="sm">Fazer Upload</Button>
-                   <span className="text-xs text-muted-foreground">Funcionalidade de upload entrará na v2. Por enquanto será sem imagem ou insira URL.</span>
+                  {previewUrl ? (
+                    <div className="relative">
+                      <img src={previewUrl} alt="Preview" className="w-24 h-24 object-cover rounded-lg border" />
+                      <button
+                        type="button"
+                        onClick={removerImagem}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center border">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground/30" />
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={uploading}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploading ? 'Enviando...' : 'Fazer Upload'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">PNG ou JPG, máx 2MB</p>
+                  </div>
                 </div>
               </div>
 
@@ -257,7 +348,7 @@ export function PainelProdutos() {
                    <FormField control={form.control} name="eh_order_bump_para" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Oferecer como Order Bump no produto:</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value || 'none'} value={field.value || 'none'}>
+                      <Select onValueChange={field.onChange} value={field.value || 'none'}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione um produto..." /></SelectTrigger></FormControl>
                         <SelectContent className="max-h-[200px]">
                           <SelectItem value="none">Nenhum</SelectItem>
@@ -275,7 +366,7 @@ export function PainelProdutos() {
                    <FormField control={form.control} name="tem_upsell_para" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Oferecer Upsell (Upgrade) para:</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value || 'none'} value={field.value || 'none'}>
+                      <Select onValueChange={field.onChange} value={field.value || 'none'}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione um produto..." /></SelectTrigger></FormControl>
                         <SelectContent className="max-h-[200px]">
                           <SelectItem value="none">Nenhum</SelectItem>
